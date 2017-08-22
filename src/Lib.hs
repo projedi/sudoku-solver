@@ -1,4 +1,4 @@
-module Lib (someFunc) where
+module Lib (someFunc, solve) where
 
 import qualified Data.List as List
 import Data.List ((\\))
@@ -70,6 +70,9 @@ readGrid = concat . zipWith (\i -> zipWith (\j c -> ((j, i), go c)) [0..]) [0..]
        go c
         | c `elem` ['1'..'9'] = CellValue (read [c])
         | otherwise = error "Invalid grid"
+
+solve :: String -> String
+solve = printGrid . update . readGrid
 
 initialGrid :: String
 initialGrid = unlines
