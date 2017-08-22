@@ -1,12 +1,15 @@
 module Lib (someFunc) where
 
 import qualified Data.List as List
+import Data.List ((\\))
+import qualified Data.Maybe as Maybe
 
 type Value = Int
 type Position = (Int, Int)
 data CellData
   = CellValue Value
   | CellAvailability [Value]
+  deriving (Eq)
 type Cell = (Position, CellData)
 type Grid = [Cell]
 
@@ -18,6 +21,23 @@ verticalContextFor grid (x,y) = [cell | cell@((xc,yc),_) <- grid, xc /= x, yc ==
 
 cellContextFor :: Grid -> Position -> [Cell]
 cellContextFor grid (x,y) = [cell | cell@((xc,yc),_) <- grid, (yc /= y || xc /= x), (x `div` 3 == xc `div` 3), (y `div` 3 == yc `div` 3)]
+
+valuesInCells :: [Cell] -> [Value]
+valuesInCells = Maybe.catMaybes . map go
+ where go :: Cell -> Maybe Value
+       go (_,CellValue v) = Just v
+       go (_,CellAvailability _) = Nothing
+
+availableForCell :: Grid -> Position -> [Value]
+availableForCell grid pos =
+  let completeContext = (horizontalContextFor grid pos) `List.union` (verticalContextFor grid pos) `List.union` (cellContextFor grid pos)
+  in [1..9] \\ (valuesInCells completeContext)
+
+updateAvailableForCell :: Grid -> Grid
+updateAvailableForCell grid = map go grid
+ where go :: Cell -> Cell
+       go c@(_,CellValue _) = c
+       go (p, CellAvailability _) = (p, CellAvailability $ availableForCell grid p)
 
 printGrid :: Grid -> String
 printGrid = unlines . map (concatMap go) . List.groupBy (\((_,pl),_) ((_,pr),_) -> pl == pr)
@@ -57,3 +77,7 @@ someFunc = do
   let grid = readGrid initialGrid
   putStrLn $ printGrid grid
   putStrLn $ printAvailability grid
+  putStrLn "Update available for cell"
+  let updatedGrid = updateAvailableForCell grid
+  putStrLn $ printGrid updatedGrid
+  putStrLn $ printAvailability updatedGrid
