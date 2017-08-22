@@ -45,6 +45,12 @@ updateUniqueAvailability = map go
        go (p, CellAvailability [v]) = (p, CellValue v)
        go c = c
 
+update :: Grid -> Grid
+update grid =
+  let grid' = updateAvailableForCell grid
+      grid'' = updateUniqueAvailability grid'
+  in if grid' == grid'' then grid'' else update grid''
+
 printGrid :: Grid -> String
 printGrid = unlines . map (concatMap go) . List.groupBy (\((_,pl),_) ((_,pr),_) -> pl == pr)
  where go :: Cell -> String
@@ -83,7 +89,7 @@ someFunc = do
   let grid = readGrid initialGrid
   putStrLn $ printGrid grid
   putStrLn $ printAvailability grid
-  putStrLn "Update available for cell"
-  let updatedGrid = updateAvailableForCell grid
+  putStrLn "Updated grid"
+  let updatedGrid = update grid
   putStrLn $ printGrid updatedGrid
   putStrLn $ printAvailability updatedGrid
