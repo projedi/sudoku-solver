@@ -39,6 +39,12 @@ updateAvailableForCell grid = map go grid
        go c@(_,CellValue _) = c
        go (p, CellAvailability _) = (p, CellAvailability $ availableForCell grid p)
 
+updateUniqueAvailability :: Grid -> Grid
+updateUniqueAvailability = map go
+ where go :: Cell -> Cell
+       go (p, CellAvailability [v]) = (p, CellValue v)
+       go c = c
+
 printGrid :: Grid -> String
 printGrid = unlines . map (concatMap go) . List.groupBy (\((_,pl),_) ((_,pr),_) -> pl == pr)
  where go :: Cell -> String
