@@ -1,21 +1,27 @@
 module Lib (someFunc) where
 
 type Value = Int
+type Position = (Int, Int)
 data CellData
   = CellValue Value
   | CellAvailability [Value]
-type Grid = [[CellData]]
-type Position = (Int, Int)
 type Cell = (Position, CellData)
+type Grid = [[Cell]]
 
 printGrid :: Grid -> String
 printGrid = unlines . map (concatMap go)
- where go :: CellData -> String
-       go (CellValue v) = show v
-       go (CellAvailability _) = "."
+ where go :: Cell -> String
+       go (_, CellValue v) = show v
+       go (_, CellAvailability _) = "."
+
+printAvailability :: Grid -> String
+printAvailability = concatMap (unlines . filter (not . null) . map go)
+ where go :: Cell -> String
+       go (_, CellValue _) = ""
+       go (p, CellAvailability vals) = show p ++ ": " ++ show vals
 
 readGrid :: String -> Grid
-readGrid = map (map go) . lines
+readGrid = zipWith (\i -> zipWith (\j c -> ((i, j), go c)) [0..]) [0..] . lines
  where go :: Char -> CellData
        go '.' = CellAvailability [1..9]
        go c
@@ -39,3 +45,4 @@ someFunc :: IO ()
 someFunc = do
   let grid = readGrid initialGrid
   putStrLn $ printGrid grid
+  putStrLn $ printAvailability grid
