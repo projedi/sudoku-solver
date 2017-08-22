@@ -1,5 +1,6 @@
 module Lib (someFunc, solve) where
 
+import Control.Applicative ((<|>))
 import qualified Data.List as List
 import Data.List ((\\))
 import qualified Data.Maybe as Maybe
@@ -33,6 +34,27 @@ availableForCell grid pos =
   let completeContext = (horizontalContextFor grid pos) `List.union` (verticalContextFor grid pos) `List.union` (cellContextFor grid pos)
   in [1..9] \\ (valuesInCells completeContext)
 
+uniqueAvailableAmong :: Grid -> Cell -> [Cell] -> Maybe Value
+uniqueAvailableAmong _ (_,CellValue v) _ = Just v
+uniqueAvailableAmong grid (_,CellAvailability vs) cells =
+  let otherVs = concat $ Maybe.catMaybes $ map go cells
+      diffVs = vs \\ otherVs
+  in case diffVs of
+       [v] -> Just v
+       _ -> Nothing
+ where go :: Cell -> Maybe [Value]
+       go (_,CellValue _) = Nothing
+       go (_,CellAvailability vs) = Just vs
+
+updateUniqueCell :: Grid -> Cell -> Cell
+updateUniqueCell grid cell@(pos,_) =
+  let horVal = uniqueAvailableAmong grid cell (horizontalContextFor grid pos)
+      verVal = uniqueAvailableAmong grid cell (verticalContextFor grid pos)
+      cellVal = uniqueAvailableAmong grid cell (cellContextFor grid pos)
+  in case horVal <|> verVal <|> cellVal of
+       Nothing -> cell
+       Just v -> (pos, CellValue v)
+
 updateAvailableForCell :: Grid -> Grid
 updateAvailableForCell grid = map go grid
  where go :: Cell -> Cell
@@ -45,11 +67,19 @@ updateUniqueAvailability = map go
        go (p, CellAvailability [v]) = (p, CellValue v)
        go c = c
 
+updateUniqueInContexts :: Grid -> Grid
+updateUniqueInContexts grid = map (updateUniqueCell grid) grid
+
 update :: Grid -> Grid
 update grid =
   let grid' = updateAvailableForCell grid
       grid'' = updateUniqueAvailability grid'
-  in if grid' == grid'' then grid'' else update grid''
+      grid''' = updateUniqueInContexts grid'
+  in if grid' /= grid''
+      then update grid''
+      else if grid' /= grid'''
+            then update grid'''
+            else grid'
 
 printGrid :: Grid -> String
 printGrid = unlines . map (concatMap go) . List.groupBy (\((_,pl),_) ((_,pr),_) -> pl == pr)
@@ -76,15 +106,15 @@ solve = printGrid . update . readGrid
 
 initialGrid :: String
 initialGrid = unlines
-  [ ".1....43."
-  , "7........"
-  , "...2549.."
-  , "17..4.2.6"
-  , "....9...3"
-  , "..3..6.8."
-  , "..147..6."
-  , "...5.812."
-  , ".9..6.3.4"
+  [ "..486..3."
+  , "..1....9."
+  , "8....9.6."
+  , "5..2.6..1"
+  , ".27..1..."
+  , "....43..6"
+  , ".5......."
+  , "..9...4.."
+  , "...4...15"
   ]
 
 someFunc :: IO ()

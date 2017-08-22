@@ -55,7 +55,32 @@ expected2 = unlines
   , "895162374"
   ]
 
+initial3 = unlines
+  [ "..486..3."
+  , "..1....9."
+  , "8....9.6."
+  , "5..2.6..1"
+  , ".27..1..."
+  , "....43..6"
+  , ".5......."
+  , "..9...4.."
+  , "...4...15"
+  ]
+
+expected3 = unlines
+  [ "974865132"
+  , "261374598"
+  , "835129764"
+  , "543296871"
+  , "627581349"
+  , "198743256"
+  , "452917683"
+  , "319658427"
+  , "786432915"
+  ]
+
 tests = testGroup "Unit tests"
   [ unitTest "1" expected1 initial1
   , unitTest "2" expected2 initial2
+  , unitTest "3" expected3 initial3
   ]
