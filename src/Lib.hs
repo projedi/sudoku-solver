@@ -93,6 +93,30 @@ printAvailability = unlines . filter (not . null) . map go
        go (_, CellValue _) = ""
        go (p, CellAvailability vals) = show p ++ ": " ++ show vals
 
+gridAsHTML :: Grid -> String
+gridAsHTML grid = "<html><style>\
+\ td.partial td {\
+\   font-weight: lighter;\
+\   font-size: xx-small;\
+\ }\
+\ td.full, td.partial {\
+\   text-align: center;\
+\   border: 1px solid;\
+\ }\
+\ </style><body><table style=\"border-collapse: collapse\"><tbody>"
+  ++ go grid ++ "</tbody></table></body></html>"
+ where go :: Grid -> String
+       go = concatMap (makeRows . concatMap go') . List.groupBy (\((_,pl),_) ((_,pr),_) -> pl == pr)
+       makeRows :: String -> String
+       makeRows content = "<tr>" ++ content ++ "</tr>"
+       go' :: Cell -> String
+       go' (_, CellValue v) = "<td class=\"full\">" ++ show v ++ "</td>"
+       go' (_, CellAvailability vals) = "<td class=\"partial\"><table><tbody>" ++ goPartial vals ++ "</tbody></table></td>"
+       goPartial :: [Value] -> String
+       goPartial vals = concatMap (\x -> "<tr>" ++ x ++ "</tr>")
+                      $ map (concatMap (\x -> "<td>" ++ x ++ "</td>"))
+                      $ map (map (\x -> if x `elem` vals then show x else "&nbsp;")) [[1,2,3],[4,5,6],[7,8,9]]
+
 readGrid :: String -> Grid
 readGrid = concat . zipWith (\i -> zipWith (\j c -> ((j, i), go c)) [0..]) [0..] . lines
  where go :: Char -> CellData
@@ -126,3 +150,5 @@ someFunc = do
   let updatedGrid = update grid
   putStrLn $ printGrid updatedGrid
   putStrLn $ printAvailability updatedGrid
+  putStrLn "Writing to /tmp/grid.html"
+  writeFile "/tmp/grid.html" (gridAsHTML updatedGrid)
