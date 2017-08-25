@@ -103,6 +103,18 @@ gridAsHTML grid = "<html><style>\
 \   text-align: center;\
 \   border: 1px solid;\
 \ }\
+\ td.border_left {\
+\   border-left-width: 2px;\
+\ }\
+\ td.border_right {\
+\   border-right-width: 2px;\
+\ }\
+\ td.border_top {\
+\   border-top-width: 2px;\
+\ }\
+\ td.border_bottom {\
+\   border-bottom-width: 2px;\
+\ }\
 \ </style><body><table style=\"border-collapse: collapse\"><tbody>"
   ++ go grid ++ "</tbody></table></body></html>"
  where go :: Grid -> String
@@ -110,12 +122,22 @@ gridAsHTML grid = "<html><style>\
        makeRows :: String -> String
        makeRows content = "<tr>" ++ content ++ "</tr>"
        go' :: Cell -> String
-       go' (_, CellValue v) = "<td class=\"full\">" ++ show v ++ "</td>"
-       go' (_, CellAvailability vals) = "<td class=\"partial\"><table><tbody>" ++ goPartial vals ++ "</tbody></table></td>"
+       go' (p, CellValue v) = "<td class=\"full " ++ classFromPos p ++ "\">" ++ show v ++ "</td>"
+       go' (p, CellAvailability vals) = "<td class=\"partial " ++ classFromPos p ++ "\"><table><tbody>" ++ goPartial vals ++ "</tbody></table></td>"
        goPartial :: [Value] -> String
        goPartial vals = concatMap (\x -> "<tr>" ++ x ++ "</tr>")
                       $ map (concatMap (\x -> "<td>" ++ x ++ "</td>"))
                       $ map (map (\x -> if x `elem` vals then show x else "&nbsp;")) [[1,2,3],[4,5,6],[7,8,9]]
+       classFromPos :: Position -> String
+       classFromPos (x,y) = classFromXPos x ++ " " ++ classFromYPos y
+       classFromXPos x
+        | x `mod` 3 == 0 = "border_left"
+        | x `mod` 3 == 2 = "border_right"
+        | otherwise = ""
+       classFromYPos y
+        | y `mod` 3 == 0 = "border_top"
+        | y `mod` 3 == 2 = "border_bottom"
+        | otherwise = ""
 
 readGrid :: String -> Grid
 readGrid = concat . zipWith (\i -> zipWith (\j c -> ((j, i), go c)) [0..]) [0..] . lines
